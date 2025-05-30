@@ -5,7 +5,7 @@ import pandas as pd
 app = FastAPI()
 
 # CSV 파일 로딩
-data = pd.read_csv("data.csv", encoding="utf-8-sig")
+data = pd.read_csv("data.csv", encoding="utf-8")
 
 # GPT 필드명 ↔ CSV 한글 열 이름 매핑
 field_map = {
