@@ -39,7 +39,7 @@ class Query(BaseModel):
     device_count: float = None
     option_info: str = None
 
-MAX_RESULTS = 50  # 최대 반환 행 수
+MAX_RESULTS = 8000  # 최대 반환 행 수
 
 @app.post("/search")
 def search(query: Query):
