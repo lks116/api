@@ -4,10 +4,10 @@ import pandas as pd
 
 app = FastAPI()
 
-# CSV 파일 로딩 (UTF-8 인코딩)
-data = pd.read_csv("data.csv", encoding="utf-8")
+# CSV 데이터 로딩 (Excel 호환 UTF-8-sig 인코딩)
+data = pd.read_csv("data.csv", encoding="utf-8-sig")
 
-# GPT 필드명 ↔ CSV 한글 열 이름 매핑
+# 필드 매핑: GPT에서 쓰는 키 → 실제 CSV 열 이름
 field_map = {
     "customer_name": "고객이름",
     "device_name": "장비명",
@@ -23,7 +23,7 @@ field_map = {
     "option_info": "옵션"
 }
 
-# 요청 모델 정의
+# API 요청 모델 정의
 class Query(BaseModel):
     customer_name: str = None
     device_name: str = None
@@ -34,11 +34,11 @@ class Query(BaseModel):
     install_date: str = None
     warranty_expiry: str = None
     option_expiry: str = None
-    usage_years: float = None       # ✅ 실수형으로 정의
-    device_count: float = None      # ✅ 실수형으로 정의
+    usage_years: float = None
+    device_count: float = None
     option_info: str = None
 
-MAX_RESULTS = 50  # 결과 제한
+MAX_RESULTS = 50  # 최대 결과 수 제한
 
 @app.post("/search")
 def search(query: Query):
@@ -50,11 +50,11 @@ def search(query: Query):
                 if pd.api.types.is_numeric_dtype(df[col]):
                     try:
                         numeric_value = float(value)
-                        df = df[abs(df[col] - numeric_value) < 0.01]  # ✅ float 비교
+                        df = df[abs(df[col] - numeric_value) < 0.01]
                     except:
-                        continue  # 파싱 실패 시 건너뜀
+                        continue
                 else:
-                    df = df[df[col].astype(str).str.contains(str(value), case=False, na=False, regex=False)]  # ✅ 특수문자 오류 방지
+                    df = df[df[col].astype(str).str.contains(str(value), case=False, na=False, regex=False)]
 
         return df.head(MAX_RESULTS).to_dict(orient="records")
 
