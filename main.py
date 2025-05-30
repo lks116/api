@@ -54,3 +54,18 @@ def search(query: Query):
                 df = df[df[col].astype(str).str.contains(str(value), case=False, na=False)]
     
     return df.to_dict(orient="records")
+
+
+MAX_RESULTS = 50  # 예: 50건까지만 반환
+
+@app.post("/search")
+def search(query: Query):
+    df = data.copy()
+    for field, col in field_map.items():
+        value = getattr(query, field)
+        if value is not None:
+            if pd.api.types.is_numeric_dtype(df[col]):
+                df = df[df[col] == value]
+            else:
+                df = df[df[col].astype(str).str.contains(str(value), case=False, na=False)]
+    return df.head(MAX_RESULTS).to_dict(orient="records")  # ✅ 개수 제한
