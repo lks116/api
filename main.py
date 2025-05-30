@@ -5,10 +5,10 @@ import numpy as np
 
 app = FastAPI()
 
-# CSV 파일 로딩 (Excel 호환 인코딩)
+# CSV 로딩 (Excel 한글 호환 인코딩)
 data = pd.read_csv("data.csv", encoding="utf-8-sig")
 
-# GPT 키 ↔ CSV 열 이름 매핑
+# 필드 매핑: API 입력 → CSV 열 이름
 field_map = {
     "customer_name": "고객이름",
     "device_name": "장비명",
@@ -24,7 +24,7 @@ field_map = {
     "option_info": "옵션"
 }
 
-# 요청 모델
+# 검색 요청 모델
 class Query(BaseModel):
     customer_name: str = None
     device_name: str = None
@@ -48,7 +48,6 @@ def search(query: Query):
         for field, col in field_map.items():
             value = getattr(query, field)
             if value is not None:
-                # 숫자 필드 처리
                 if pd.api.types.is_numeric_dtype(df[col]):
                     try:
                         numeric_value = float(value)
@@ -56,6 +55,7 @@ def search(query: Query):
                     except:
                         continue
                 else:
-                    # 문자열 정리: NaN 제거 → 공백 정리 → 소문자 변환
-                    df[col] = df[col].fillna("").astype(str).str.replace(r"\s+", " ", regex=True).str.strip().str.lower()
-                    value_str = str(value).strip().lower()
+                    # 문자열 정규화
+                    df[col] = (
+                        df[col]
+                        .fillna("")
