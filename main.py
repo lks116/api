@@ -5,10 +5,10 @@ import numpy as np
 
 app = FastAPI()
 
-# CSV 로딩 (Excel 한글 호환 인코딩)
+# CSV 로드
 data = pd.read_csv("data.csv", encoding="utf-8-sig")
 
-# 필드 매핑: API 입력 → CSV 열 이름
+# 사용자 요청 필드 정의 → CSV 열 이름 매핑
 field_map = {
     "customer_name": "고객이름",
     "device_name": "장비명",
@@ -24,7 +24,7 @@ field_map = {
     "option_info": "옵션"
 }
 
-# 검색 요청 모델
+# 검색 쿼리 모델 정의
 class Query(BaseModel):
     customer_name: str = None
     device_name: str = None
@@ -39,7 +39,7 @@ class Query(BaseModel):
     device_count: float = None
     option_info: str = None
 
-MAX_RESULTS = 50
+MAX_RESULTS = 50  # 최대 반환 행 수
 
 @app.post("/search")
 def search(query: Query):
@@ -51,11 +51,30 @@ def search(query: Query):
                 if pd.api.types.is_numeric_dtype(df[col]):
                     try:
                         numeric_value = float(value)
-                        df = df[abs(df[col] - numeric_value) < 0.01]
+                        df = df[np.abs(df[col] - numeric_value) < 0.01]
                     except:
                         continue
                 else:
-                    # 문자열 정규화
                     df[col] = (
                         df[col]
                         .fillna("")
+                        .astype(str)
+                        .str.replace(r"\s+", " ", regex=True)
+                        .str.strip()
+                        .str.lower()
+                    )
+                    value_str = str(value).strip().lower()
+                    df = df[df[col].str.contains(value_str, na=False, regex=False)]
+
+        # NaN, inf 처리 → JSON 직렬화 오류 방지
+        df.replace([np.inf, -np.inf], None, inplace=True)
+        df.fillna("", inplace=True)
+
+        return df.head(MAX_RESULTS).to_dict(orient="records")
+
+    except Exception as e:
+        return {"error": str(e)}
+
+@app.get("/")
+def root():
+    return {"message": "장비 검색 API 정상 작동 중"}
