@@ -4,10 +4,10 @@ import pandas as pd
 
 app = FastAPI()
 
-# CSV 로딩
+# CSV 파일 로딩
 data = pd.read_csv("data.csv", encoding="utf-8-sig")
 
-# 영문 → 한글 열 이름 매핑
+# GPT 필드명 ↔ CSV 한글 열 이름 매핑
 field_map = {
     "customer_name": "고객이름",
     "device_name": "장비명",
@@ -39,28 +39,13 @@ class Query(BaseModel):
     option_info: str = None
 
 # 검색 API
-@app.post("/search")
-def search(query: Query):
-    df = data.copy()
-    
-    for field, col in field_map.items():
-        value = getattr(query, field)
-        if value is not None:
-            if df[col].dtype == "int64":
-                # 정수형 필드 (사용년, 총장비수 등)
-                df = df[df[col] == value]
-            else:
-                # 문자열 필드 - 부분 일치 검색
-                df = df[df[col].astype(str).str.contains(str(value), case=False, na=False)]
-    
-    return df.to_dict(orient="records")
-
-
-MAX_RESULTS = 50  # 예: 50건까지만 반환
+MAX_RESULTS = 50  # ✅ 검색 결과 개수 제한
 
 @app.post("/search")
 def search(query: Query):
     df = data.copy()
+
+    # 모든 필드 필터링
     for field, col in field_map.items():
         value = getattr(query, field)
         if value is not None:
@@ -68,4 +53,6 @@ def search(query: Query):
                 df = df[df[col] == value]
             else:
                 df = df[df[col].astype(str).str.contains(str(value), case=False, na=False)]
-    return df.head(MAX_RESULTS).to_dict(orient="records")  # ✅ 개수 제한
+
+    # ✅ 결과 개수 제한 적용
+    return df.head(MAX_RESULTS).to_dict(orient="records")
