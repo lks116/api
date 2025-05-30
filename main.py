@@ -4,10 +4,10 @@ import pandas as pd
 
 app = FastAPI()
 
-# CSV 데이터 로딩 (Excel 호환 UTF-8-sig 인코딩)
+# CSV 로딩 (Excel 호환 인코딩)
 data = pd.read_csv("data.csv", encoding="utf-8-sig")
 
-# 필드 매핑: GPT에서 쓰는 키 → 실제 CSV 열 이름
+# GPT 키 ↔ 실제 CSV 열 매핑
 field_map = {
     "customer_name": "고객이름",
     "device_name": "장비명",
@@ -23,7 +23,7 @@ field_map = {
     "option_info": "옵션"
 }
 
-# API 요청 모델 정의
+# 검색 요청 모델 정의
 class Query(BaseModel):
     customer_name: str = None
     device_name: str = None
@@ -38,7 +38,7 @@ class Query(BaseModel):
     device_count: float = None
     option_info: str = None
 
-MAX_RESULTS = 50  # 최대 결과 수 제한
+MAX_RESULTS = 50
 
 @app.post("/search")
 def search(query: Query):
@@ -54,7 +54,10 @@ def search(query: Query):
                     except:
                         continue
                 else:
-                    df = df[df[col].astype(str).str.contains(str(value), case=False, na=False, regex=False)]
+                    # 문자열 정리: 공백 제거, 소문자 변환, 다중 공백 통일
+                    df[col] = df[col].astype(str).str.replace(r"\s+", " ", regex=True).str.strip().str.lower()
+                    value_str = str(value).strip().lower()
+                    df = df[df[col].str.contains(value_str, na=False, regex=False)]
 
         return df.head(MAX_RESULTS).to_dict(orient="records")
 
