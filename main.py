@@ -14,7 +14,7 @@ field_map = {
     "device_name": "장비명",
     "serial_number": "시리얼넘버",
     "region": "지역",
-    "city": "시",
+    "city": "시/도",
     "address": "주소",
     "install_date": "고객설치일",
     "warranty_expiry": "워런티종료일",
