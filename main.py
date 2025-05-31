@@ -20,7 +20,6 @@ field_map = {
     "warranty_expiry": "워런티종료일",
     "option_expiry": "옵타입종료일",
     "usage_years": "사용년",
-    "device_count": "총장비수",
     "option_info": "옵션"
 }
 
@@ -36,7 +35,6 @@ class Query(BaseModel):
     warranty_expiry: str = None
     option_expiry: str = None
     usage_years: float = None
-    device_count: float = None
     option_info: str = None
 
 MAX_RESULTS = 8000  # 최대 반환 행 수
